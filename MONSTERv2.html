@@ -1,0 +1,609 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Daily Payment Tracker</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 0;
+      padding: 0;
+      background-color: #f4f4f9;
+      color: #333;
+      transition: background-color 0.3s, color 0.3s;
+    }
+    header {
+      background-color: #0073e6;
+      color: white;
+      text-align: center;
+      padding: 1rem;
+      transition: background-color 0.3s;
+    }
+    main {
+      padding: 1rem;
+      max-width: 800px;
+      margin: 0 auto;
+    }
+    input, button {
+      padding: 0.5rem;
+      margin: 0.5rem 0;
+      font-size: 1rem;
+      width: 100%;
+      box-sizing: border-box;
+      transition: background-color 0.3s, color 0.3s, border-color 0.3s;
+    }
+    button {
+      background-color: #0073e6;
+      color: white;
+      border: none;
+      cursor: pointer;
+      transition: background-color 0.3s;
+    }
+    button:hover {
+      background-color: #005bb5;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 1rem;
+      transition: background-color 0.3s, color 0.3s;
+    }
+    th, td {
+      border: 1px solid #ddd;
+      padding: 0.5rem;
+      text-align: left;
+      transition: background-color 0.3s, color 0.3s;
+    }
+    th {
+      background-color: #0073e6;
+      color: white;
+    }
+    .total {
+      margin-top: 1rem;
+      font-size: 1.2rem;
+      font-weight: bold;
+      text-align: right;
+      transition: color 0.3s;
+    }
+    footer {
+      text-align: center;
+      font-style: italic;
+      font-weight: bold;
+      font-size: 0.8rem;
+      margin-top: 2rem;
+      padding: 1rem;
+      background-color: #f4f4f9;
+      transition: background-color 0.3s, color 0.3s;
+    }
+    .internship {
+      font-style: italic;
+      font-size: 0.7rem;
+      margin-top: 0.5rem;
+      transition: color 0.3s;
+    }
+    .summary {
+      margin-top: 1rem;
+      font-size: 1rem;
+      font-weight: bold;
+      text-align: center;
+      transition: color 0.3s;
+    }
+    #historySection {
+      display: none;
+      margin-top: 1rem;
+    }
+    #historyTable {
+      margin-top: 1rem;
+    }
+    /* Dark Mode Styles */
+    body.dark-mode {
+      background-color: #121212;
+      color: #e0e0e0;
+    }
+    body.dark-mode header {
+      background-color: #1e1e1e;
+    }
+    body.dark-mode input, body.dark-mode button {
+      background-color: #1e1e1e;
+      color: #e0e0e0;
+      border-color: #333;
+    }
+    body.dark-mode button {
+      background-color: #333;
+    }
+    body.dark-mode button:hover {
+      background-color: #555;
+    }
+    body.dark-mode table {
+      background-color: #1e1e1e;
+    }
+    body.dark-mode th, body.dark-mode td {
+      background-color: #1e1e1e;
+      color: #e0e0e0;
+    }
+    body.dark-mode th {
+      background-color: #333;
+    }
+    body.dark-mode footer {
+      background-color: #1e1e1e;
+    }
+    /* Switch Styles */
+    .theme-switch {
+      position: fixed;
+      top: 1rem;
+      right: 1rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      z-index: 1000;
+    }
+    .switch {
+      position: relative;
+      display: inline-block;
+      width: 50px;
+      height: 24px;
+    }
+    .switch input {
+      opacity: 0;
+      width: 0;
+      height: 0;
+    }
+    .slider {
+      position: absolute;
+      cursor: pointer;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background-color: #ccc;
+      transition: 0.3s;
+      border-radius: 24px;
+    }
+    .slider:before {
+      position: absolute;
+      content: "";
+      height: 18px;
+      width: 18px;
+      left: 3px;
+      bottom: 3px;
+      background-color: white;
+      transition: 0.3s;
+      border-radius: 50%;
+    }
+    input:checked + .slider {
+      background-color: #0073e6;
+    }
+    input:checked + .slider:before {
+      transform: translateX(26px);
+    }
+    /* Chart Styles */
+    #spendingChart {
+      margin-top: 2rem;
+    }
+    /* Search Bar */
+    #searchBar {
+      margin-bottom: 1rem;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Daily Payment Tracker</h1>
+  </header>
+  <main>
+    <!-- Theme Switch -->
+    <div class="theme-switch">
+      <i class="fas fa-sun"></i>
+      <label class="switch">
+        <input type="checkbox" id="themeToggle">
+        <span class="slider"></span>
+      </label>
+      <i class="fas fa-moon"></i>
+    </div>
+
+    <h2>Add Payment</h2>
+    <input type="text" id="description" placeholder="Enter description (e.g., Groceries)" required>
+    <input type="number" id="amount" placeholder="Enter amount (e.g., 50)" step="0.01" required>
+    <button onclick="addPayment()">Add Payment</button>
+    <button onclick="undoLastAction()" id="undoButton" disabled>Undo</button>
+
+    <h2>Payments History</h2>
+    <input type="text" id="searchBar" placeholder="Search transactions..." oninput="filterTransactions()">
+    <table id="paymentsTable">
+      <thead>
+        <tr>
+          <th>Date</th>
+          <th>Description</th>
+          <th>Amount (₹)</th>
+        </tr>
+      </thead>
+      <tbody>
+        <!-- Payments will appear here -->
+      </tbody>
+    </table>
+    <div class="total" id="totalSpent">Total Spent Today: ₹0.00</div>
+    <div class="summary" id="monthlySummary">Monthly Summary: ₹0.00</div>
+
+    <!-- Export Button -->
+    <button onclick="exportToCSV()">Export Data as CSV</button>
+
+    <!-- Budget Section -->
+    <h3>Budget Tracker</h3>
+    <input type="number" id="budgetInput" placeholder="Set Monthly Budget (₹)" step="0.01">
+    <button onclick="setBudget()">Set Budget</button>
+    <div id="budgetStatus"></div>
+
+    <!-- History Button and Section -->
+    <button onclick="toggleHistory()">View Monthly Spend History</button>
+    <div id="historySection">
+      <h3>Monthly Spend History</h3>
+      <table id="historyTable">
+        <thead>
+          <tr>
+            <th>Month</th>
+            <th>Total Spent (₹)</th>
+          </tr>
+        </thead>
+        <tbody>
+          <!-- Monthly history will appear here -->
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Spending Chart -->
+    <canvas id="spendingChart"></canvas>
+
+    <!-- Reset Button -->
+    <button onclick="resetData()">Reset All Data</button>
+  </main>
+  <footer>
+    Developed by : Herwin , Gautham , Himanshu , Jiya , James , Joelle , Vidhya
+    <div class="internship">Internship Project 2024-25</div>
+  </footer>
+
+  <script>
+    // Function to format numbers in Indian numbering system
+    function formatIndianNumber(amount) {
+      const formatter = new Intl.NumberFormat('en-IN', {
+        style: 'currency',
+        currency: 'INR',
+      });
+      return formatter.format(amount);
+    }
+
+    // Initialize an array to store payments with dates
+    let payments = JSON.parse(localStorage.getItem('payments')) || [];
+    let budget = parseFloat(localStorage.getItem('budget')) || null;
+    let undoStack = [];
+
+    // Function to add a payment
+    function addPayment() {
+      const description = document.getElementById('description').value.trim();
+      const amount = parseFloat(document.getElementById('amount').value);
+
+      if (description === '' || isNaN(amount) || amount <= 0) {
+        alert('Please enter valid description and amount.');
+        return;
+      }
+
+      if (!confirm('Are you sure you want to add this payment?')) {
+        return;
+      }
+
+      // Get current date
+      const today = new Date();
+      const formattedDate = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
+
+      // Add payment to the array
+      const newPayment = { date: formattedDate, description, amount };
+      undoStack.push({ action: 'add', payment: newPayment });
+      payments.push(newPayment);
+
+      // Save payments to localStorage
+      localStorage.setItem('payments', JSON.stringify(payments));
+
+      // Clear input fields
+      document.getElementById('description').value = '';
+      document.getElementById('amount').value = '';
+
+      // Update the table and totals
+      updateTable();
+      calculateTotalSpent();
+      calculateMonthlySummary();
+      updateHistoryTable();
+      updateChart();
+      checkBudget();
+      enableUndoButton();
+    }
+
+    // Function to undo the last action
+    function undoLastAction() {
+      if (undoStack.length === 0) return;
+
+      const lastAction = undoStack.pop();
+      if (lastAction.action === 'add') {
+        const index = payments.indexOf(lastAction.payment);
+        if (index > -1) {
+          payments.splice(index, 1);
+        }
+      }
+
+      // Save payments to localStorage
+      localStorage.setItem('payments', JSON.stringify(payments));
+
+      // Update the table and totals
+      updateTable();
+      calculateTotalSpent();
+      calculateMonthlySummary();
+      updateHistoryTable();
+      updateChart();
+      checkBudget();
+
+      if (undoStack.length === 0) {
+        disableUndoButton();
+      }
+    }
+
+    // Enable/Disable Undo Button
+    function enableUndoButton() {
+      document.getElementById('undoButton').disabled = false;
+    }
+    function disableUndoButton() {
+      document.getElementById('undoButton').disabled = true;
+    }
+
+    // Function to reset all data
+    function resetData() {
+      if (!confirm('Are you sure you want to reset all data? This cannot be undone.')) {
+        return;
+      }
+
+      payments = [];
+      budget = null;
+      undoStack = [];
+      localStorage.clear();
+
+      updateTable();
+      calculateTotalSpent();
+      calculateMonthlySummary();
+      updateHistoryTable();
+      updateChart();
+      checkBudget();
+      disableUndoButton();
+    }
+
+    // Function to update the payments table
+    function updateTable() {
+      const tbody = document.querySelector('#paymentsTable tbody');
+      tbody.innerHTML = ''; // Clear existing rows
+
+      payments.forEach((payment, index) => {
+        const row = document.createElement('tr');
+
+        const dateCell = document.createElement('td');
+        dateCell.textContent = payment.date;
+
+        const descCell = document.createElement('td');
+        descCell.textContent = payment.description;
+
+        const amountCell = document.createElement('td');
+        amountCell.textContent = formatIndianNumber(payment.amount);
+
+        row.appendChild(dateCell);
+        row.appendChild(descCell);
+        row.appendChild(amountCell);
+
+        tbody.appendChild(row);
+      });
+    }
+
+    // Function to calculate and display total spent today
+    function calculateTotalSpent() {
+      const today = new Date();
+      const formattedDate = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
+
+      const totalToday = payments
+        .filter(payment => payment.date === formattedDate)
+        .reduce((sum, payment) => sum + payment.amount, 0);
+
+      document.getElementById('totalSpent').textContent = `Total Spent Today: ${formatIndianNumber(totalToday)}`;
+    }
+
+    // Function to calculate and display monthly summary
+    function calculateMonthlySummary() {
+      const today = new Date();
+      const currentMonth = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}`;
+
+      const totalMonthly = payments
+        .filter(payment => payment.date.startsWith(currentMonth))
+        .reduce((sum, payment) => sum + payment.amount, 0);
+
+      document.getElementById('monthlySummary').textContent = `Monthly Summary: ${formatIndianNumber(totalMonthly)}`;
+    }
+
+    // Function to toggle history section
+    function toggleHistory() {
+      const historySection = document.getElementById('historySection');
+      if (historySection.style.display === 'none' || historySection.style.display === '') {
+        historySection.style.display = 'block';
+        updateHistoryTable();
+      } else {
+        historySection.style.display = 'none';
+      }
+    }
+
+    // Function to update the history table
+    function updateHistoryTable() {
+      const tbody = document.querySelector('#historyTable tbody');
+      tbody.innerHTML = ''; // Clear existing rows
+
+      // Group payments by month
+      const monthlyTotals = {};
+      payments.forEach(payment => {
+        const monthKey = payment.date.substring(0, 7); // Extract YYYY-MM
+        if (!monthlyTotals[monthKey]) {
+          monthlyTotals[monthKey] = 0;
+        }
+        monthlyTotals[monthKey] += payment.amount;
+      });
+
+      // Populate the history table
+      for (const [month, total] of Object.entries(monthlyTotals)) {
+        const row = document.createElement('tr');
+
+        const monthCell = document.createElement('td');
+        monthCell.textContent = new Date(`${month}-01`).toLocaleString('default', { month: 'long', year: 'numeric' });
+
+        const totalCell = document.createElement('td');
+        totalCell.textContent = formatIndianNumber(total);
+
+        row.appendChild(monthCell);
+        row.appendChild(totalCell);
+
+        tbody.appendChild(row);
+      }
+    }
+
+    // Function to export data as CSV
+    function exportToCSV() {
+      const csvRows = [
+        ['Date', 'Description', 'Amount'],
+        ...payments.map(payment => [payment.date, payment.description, payment.amount]),
+      ];
+
+      const csvContent = csvRows.map(row => row.join(',')).join('\n');
+      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.setAttribute('href', url);
+      link.setAttribute('download', 'transactions.csv');
+      link.click();
+    }
+
+    // Function to filter transactions
+    function filterTransactions() {
+      const query = document.getElementById('searchBar').value.toLowerCase();
+      const rows = document.querySelectorAll('#paymentsTable tbody tr');
+
+      rows.forEach(row => {
+        const text = row.textContent.toLowerCase();
+        row.style.display = text.includes(query) ? '' : 'none';
+      });
+    }
+
+    // Function to set budget
+    function setBudget() {
+      const budgetInput = parseFloat(document.getElementById('budgetInput').value);
+      if (isNaN(budgetInput) || budgetInput <= 0) {
+        alert('Please enter a valid budget amount.');
+        return;
+      }
+
+      budget = budgetInput;
+      localStorage.setItem('budget', budget);
+      checkBudget();
+    }
+
+    // Function to check budget status
+    function checkBudget() {
+      const today = new Date();
+      const currentMonth = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}`;
+      const totalMonthly = payments
+        .filter(payment => payment.date.startsWith(currentMonth))
+        .reduce((sum, payment) => sum + payment.amount, 0);
+
+      const budgetStatus = document.getElementById('budgetStatus');
+      if (budget !== null) {
+        if (totalMonthly > budget) {
+          budgetStatus.textContent = `You have exceeded your budget by ${formatIndianNumber(totalMonthly - budget)}.`;
+          budgetStatus.style.color = 'red';
+        } else {
+          budgetStatus.textContent = `You are within your budget. Remaining: ${formatIndianNumber(budget - totalMonthly)}.`;
+          budgetStatus.style.color = 'green';
+        }
+      } else {
+        budgetStatus.textContent = 'No budget set.';
+        budgetStatus.style.color = 'black';
+      }
+    }
+
+    // Function to update spending chart
+    function updateChart() {
+      const monthlyTotals = {};
+      payments.forEach(payment => {
+        const monthKey = payment.date.substring(0, 7); // Extract YYYY-MM
+        if (!monthlyTotals[monthKey]) {
+          monthlyTotals[monthKey] = 0;
+        }
+        monthlyTotals[monthKey] += payment.amount;
+      });
+
+      const labels = Object.keys(monthlyTotals).map(month => new Date(`${month}-01`).toLocaleString('default', { month: 'long', year: 'numeric' }));
+      const data = Object.values(monthlyTotals);
+
+      const ctx = document.getElementById('spendingChart').getContext('2d');
+      if (window.spendingChart) {
+        window.spendingChart.destroy();
+      }
+      window.spendingChart = new Chart(ctx, {
+        type: 'bar',
+        data: {
+          labels,
+          datasets: [{
+            label: 'Spending (₹)',
+            data,
+            backgroundColor: '#0073e6',
+            borderColor: '#005bb5',
+            borderWidth: 1,
+          }],
+        },
+        options: {
+          responsive: true,
+          plugins: {
+            legend: {
+              display: false,
+            },
+          },
+          scales: {
+            y: {
+              beginAtZero: true,
+            },
+          },
+        },
+      });
+    }
+
+    // On page load, update the table and totals
+    window.onload = () => {
+      updateTable();
+      calculateTotalSpent();
+      calculateMonthlySummary();
+      updateHistoryTable();
+      updateChart();
+      checkBudget();
+
+      // Load theme from localStorage
+      const isDarkMode = localStorage.getItem('darkMode') === 'true';
+      if (isDarkMode) {
+        document.body.classList.add('dark-mode');
+        document.getElementById('themeToggle').checked = true;
+      }
+    };
+
+    // Theme Toggle Logic
+    document.getElementById('themeToggle').addEventListener('change', (event) => {
+      if (event.target.checked) {
+        document.body.classList.add('dark-mode');
+        localStorage.setItem('darkMode', 'true');
+      } else {
+        document.body.classList.remove('dark-mode');
+        localStorage.setItem('darkMode', 'false');
+      }
+    });
+  </script>
+</body>
+</html>
+     
